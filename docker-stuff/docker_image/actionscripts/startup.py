@@ -80,7 +80,7 @@ if len(vms) != len(start_order):
     sys.exit(f'Not all the VMs were found in database for ids: {start_order}')
 
 # log in to the turbo API
-turbo = getdata.TurboApi('10.188.161.53', envs['turbouser'], envs['turbopass'])
+turbo = getdata.TurboApi(envs['turbo_host'], envs['turbouser'], envs['turbopass'])
 # build the payload
 ansible_payload = {'inventory': '', 'order': []}
 for id in start_order:
