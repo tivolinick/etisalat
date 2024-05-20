@@ -1,0 +1,121 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: actionscripts
+  namespace: turbointegrations
+  labels:
+    environment: prod
+    team: turbointegrations
+    app: actionscripts
+    version: "0.0.3"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: actionscripts
+  template:
+    metadata:
+      labels:
+        environment: prod
+        team: turbointegrations
+        app: actionscripts
+        version: "0.0.3"
+    spec:
+      containers:
+      - name: actionscripts
+        image: nickfreer/orchestration:0.0.3
+        imagePullPolicy: Always
+        env:
+        - name: TURBOPASS
+          valueFrom:
+            secretKeyRef:
+              name: actionscriptkeys
+              key: turbopass
+        - name: TURBOUSER
+          valueFrom:
+            secretKeyRef:
+              name: actionscriptkeys
+              key: turbouser
+        ports:
+        - name: sshd
+          containerPort: 22
+        volumeMounts:
+        - mountPath: /sshkeys
+          name: sshkeys
+        - mountPath: /externalhosts
+          name: externalhosts
+        - mountPath: /actionscriptrefs
+          name: actionscriptrefs
+        - mountPath: /actionscriptcreds
+          name: actionscriptcreds
+      volumes:
+      - name: sshkeys
+        secret:
+          secretName: actionscriptkeys
+      - name: actionscriptcreds
+        secret:
+          secretName: actionscriptcreds
+      - name: externalhosts
+        configMap:
+          name: externalhosts
+      - name: actionscriptrefs
+        configMap:
+          name: actionscriptrefs
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: actionscripts
+  namespace: turbointegrations
+spec:
+  ports:
+  - name: sshd
+    port: 22
+    protocol: TCP
+  selector:
+    app: actionscripts
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: turbointegrations
+  labels:
+    zone: internal
+  name: actionstatus
+spec:
+  allocateLoadBalancerNodePorts: true
+  externalIPs:
+  - 10.188.161.53
+  externalTrafficPolicy: Local
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - name: status
+    nodePort: 32000
+    port: 5000
+    protocol: TCP
+    targetPort: 5000
+  selector:
+    app: actionscripts
+  type: LoadBalancer
+
+
+        #  items:
+        #   - key: turbo_host
+        #     path: turbohost
+        #   - key: db_host
+        #     path: db_host
+        #   - key: db_name
+        #     path: db_name
+        #   - key: db_port
+        #     path: db_port
+        #   - key: ansible_host
+        #     path: ansible_host
+
+        #  items:
+        #   - key: startup
+        #     path: startup
+        #   - key: shutdown
+        #     path: shutdown            
